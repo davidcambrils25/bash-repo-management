@@ -31,8 +31,10 @@ jobs:
       new_version: ${{ steps.check-git-diff.outputs.version }}
       update_artifacts: ${{ steps.check-git-diff.outputs.changes_found }}
     steps:
-      - uses: davidcambrils25/bash-repo-management/.github/actions/configure-git@main
+      - name: Configure Git
+        id: check-git-diff
+        uses: davidcambrils25/bash-repo-management/.github/actions/configure-git@main
         with:
           GIT_USER: ${{ secrets.GIT_USER }}
           GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
-        id: check-git-diff
+        
