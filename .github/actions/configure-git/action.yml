@@ -1,6 +1,9 @@
 name: 'Configure Git'
 description: 'Configure git credentials and extract repository name'
 inputs:
+  BUILD_PATH:
+    description: 'Path to the build directory'
+    required: true
   GIT_USER:
     description: 'Username for git'
     required: true
