@@ -10,16 +10,16 @@ inputs:
 outputs:
   repo_name:
     description: 'Repository name extracted from the GitHub repository'
-    value: ${{ jobs.configure-git.outputs.repo_name }}
+    value: ${{ steps.get-repo.outputs.repo_name }}
   binary_name: 
     description: 'Binary name extracted from the GitHub repository'
-    value: ${{ jobs.configure-git.outputs.binary_name }}
+    value: ${{ steps.check-git-diff.outputs.binary_name }}
   new_version:
     description: 'New version of the binary'
-    value: ${{ jobs.configure-git.outputs.new_version }}
+    value: ${{ steps.check-git-diff.outputs.new_version }}
   update_artifacts:
     description: 'Flag to update artifacts_to_deploy.yml'
-    value: ${{ jobs.configure-git.outputs.update_artifacts }}
+    value: ${{ steps.check-git-diff.outputs.update_artifacts }}
 
 runs:
   using: 'composite'

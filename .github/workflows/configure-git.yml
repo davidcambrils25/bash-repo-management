@@ -25,11 +25,6 @@ on:
 jobs:
   configure-git:
     runs-on: cobol
-    outputs:
-      repo_name: ${{ steps.check-git-diff.outputs.repository }}
-      binary_name: ${{ steps.check-git-diff.outputs.binary }}
-      new_version: ${{ steps.check-git-diff.outputs.version }}
-      update_artifacts: ${{ steps.check-git-diff.outputs.changes_found }}
     steps:
       - name: Configure Git
         id: check-git-diff
