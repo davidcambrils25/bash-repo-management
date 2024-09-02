@@ -1,0 +1,36 @@
+name: Reusable M2 Deploy Artifacts Workflow
+
+on:
+  workflow_call:
+    inputs:
+      BUCKET_NAME:
+        required: true
+        type: string
+      BUCKET_PATH:
+        required: true
+        type: string
+      DEPLOYMENT_PATH:
+        required: true
+        type: string
+      AWS_REGION:
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_ID:
+        required: true
+      AWS_SECRET_ACCESS:
+        required: true
+
+jobs:
+  m2-deploy:
+    runs-on: cobol
+    steps:
+      - name: Configure AWS credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS }}
+          aws configure set region ${{ inputs.AWS_REGION }}
+
+      - name: Upload to S3
+        run: |
+          aws s3 cp ${{ inputs.DEPLOYMENT_PATH }} s3://"${{ inputs.BUCKET_NAME }}/${{ inputs.BUCKET_PATH }}" --recursive

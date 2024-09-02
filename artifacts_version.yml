@@ -1,0 +1,9 @@
+global_version: 1.0
+binaries:
+  - name: CBACT01C
+    version: 2
+    sources: [test1.yml, test2.yml]
+  - name: GENFDIAS
+    runID: "10487536269"
+    version: "7"
+    sources: [DEACS00D.jcl, action.yml, action.yml, action.yml, action.yml, action.yml, GENFDIAS.cbl.dir]

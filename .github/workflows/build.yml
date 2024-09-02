@@ -1,0 +1,36 @@
+name: Reusable Build Artifacts Workflow
+
+on:
+  workflow_call:
+    inputs:
+      BUILD_PATH:
+        required: true
+        type: string
+      OUTPUT_DIR:
+        required: true
+        type: string
+      DEVROOT:
+        required: true
+        type: string
+      CURRPROJ:
+        required: true
+        type: string
+    secrets:
+      USER_VM:
+        required: true
+      HOST_VM:
+        required: true
+
+jobs:
+  build-artifacts:
+    runs-on: cobol
+    steps:
+      - name: Set environment variables & compile project
+        env:
+          DEVROOT: ${{ inputs.DEVROOT }}
+          CURRPROJ: ${{ inputs.CURRPROJ }}
+        run: |
+          mkdir -p ${{ github.workspace }}/${{ inputs.OUTPUT_DIR }}
+          cd ${{ inputs.BUILD_PATH }}/cicd_scripts/
+          chmod +x ./build.sh
+          ./build.sh "${{ secrets.USER_VM }}" "${{ secrets.HOST_VM }}" "$DEVROOT" "$CURRPROJ"

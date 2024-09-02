@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [[ $1 = "?" ]]
+then
+    echo " "
+    echo "usage: dtoxtaball [extension]"
+    echo " "            
+    echo "If no extension is given then dtoxtab will replace all TAB's with"
+    echo "4 spaces from all files in the current directory."
+    echo " "
+    echo "If an extension is given then dtoxtab will strip execute against "
+    echo "all files that match "*extension" in the current directory."
+    exit 1
+fi
+
+if [[ $# -eq 1 ]]
+then
+    FILES=`ls *$1`
+else
+    FILES=`ls *`
+fi
+
+for i in $FILES
+do
+    dtoxtab $i
+done

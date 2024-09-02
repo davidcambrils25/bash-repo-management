@@ -1,0 +1,404 @@
+#!/bin/bash
+
+################################################################################
+#
+# Start Script
+# ------------
+#
+################################################################################
+#
+# Debug option to view the script as it executes
+#
+#set -x
+#
+################################################################################
+#
+# Functions
+#
+################################################################################
+#
+# Depoly the compiled code
+
+
+function deploy {
+
+    mv $SOURCE_DIR/COBOL/${PROGRAM%.cbl}.idy $TARGET_DIR 2>/dev/null
+    mv $SOURCE_DIR/COBOL/${PROGRAM%.cbl}$TARGETEXT $TARGET_DIR 2>/dev/null
+
+}
+
+################################################################################
+# Clean up all files created during a source compilation
+#
+function clean_comp {
+
+    rm $SOURCE_DIR/COBOL/${PROGRAM%.cbl}.int 2>/dev/null
+    rm $SOURCE_DIR/COBOL/${PROGRAM%.cbl}.idy 2>/dev/null
+    rm $SOURCE_DIR/COBOL/${PROGRAM%.cbl}.gnt 2>/dev/null
+    rm $SOURCE_DIR/COBOL/${PROGRAM%.cbl}.so 2>/dev/null
+    rm $SOURCE_DIR/COBOL/${PROGRAM%.cbl}.o 2>/dev/null
+
+}
+
+################################################################################
+# Remove the listing file from the initial listing output directory
+#
+function clean_list {
+
+    rm $UXLISTINGS/${PROGRAM%.cbl}.lst 2>/dev/null
+
+}
+################################################################################
+# Remove the listing files from the FAIL listing directory
+#
+function clean_list_f {
+
+    rm $FAIL_LIST/${PROGRAM%.cbl}.lst 2>/dev/null
+
+}
+
+################################################################################
+# Move the listing to the FAIL listing directory
+#
+function fail_list {
+
+    mv $UXLISTINGS/${PROGRAM%.cbl}.lst $FAIL_LIST
+
+}
+
+################################################################################
+# Move the listing to the GOOD listing directory
+#
+function good_list {
+
+    mv $UXLISTINGS/${PROGRAM%.cbl}.lst $GOOD_LIST
+
+}
+
+################################################################################
+# Check the status of the compilation
+#
+function checkcomp {
+
+    if [[ ${RTN} -eq 0 ]]
+    then
+        echo "Compile successful"
+        if [[ ${KEEPLIST} = "yes" ]]
+        then
+            echo "Removing intermediate compile files."
+            echo "Preserving all listing files."
+	    deploy
+	    good_list
+	    clean_comp
+        else
+            echo "Removing intermediate compile files."
+            echo "Removing all listing files."
+	    deploy
+	    clean_list
+	    clean_comp
+        fi
+	if [[ ${TYPE} = "mass_f" ]]
+	then
+	    clean_list_f
+	fi
+
+	let success_count=success_count+1
+
+    else
+        echo "Compile Failed"
+        echo "Removing intermediate compile files."
+        echo "Preserving all listing files."
+	fail_list
+	clean_comp
+	let fail_count=fail_count+1
+    fi
+}
+
+################################################################################
+# Compile a program
+#
+function build {
+
+    let total_count=total_count+1
+
+    cob $COBFLAGS $ANIM -C USE=$UXDIRS/$PROGRAM.dir -C USE=$COBDIRECTIVES1 -C USE=$COBDIRECTIVES2 -C USE=$COBDIRECTIVES3 $PROGRAM
+    export RTN=$?
+    checkcomp
+}
+
+
+################################################################################
+#
+# Build a diff list of sources vs loadlib
+#
+
+function build_diff {
+
+    rm ${CURRPROJ}/UXBUILD/LIST_DIR/missing.txt 2>/dev/null
+    cd ${SOURCE_DIR}/COBOL
+
+    FILES=$(ls *.cbl)
+
+#echo $FILES
+#read x
+
+    let count=0
+
+    for i in $FILES
+    do
+#echo ${TARGET_DIR}/${i%.cbl}$TARGETEXT
+#read x
+
+        if [[ ! -f ${TARGET_DIR}/${i%.cbl}$TARGETEXT ]]
+        then
+          let count=count+1
+          echo ${i} >> ${CURRPROJ}/UXBUILD/LIST_DIR/missing.txt
+        fi
+    done
+
+    if [[ $count -eq 0 ]]
+    then
+      echo "There are no files to compile"
+      exit 0
+    fi
+
+}
+
+
+################################################################################
+#
+# Main script
+#
+################################################################################
+# Define the Default values for command line options
+#
+#
+
+clear
+
+export PROGRAMTARGET=all
+export COBDIRECTIVES=""
+export COBDIRECTIVES1="$DEFAULTDIR/DUMMY.DIR"
+export COBDIRECTIVES2="$DEFAULTDIR/DUMMY.DIR"
+export COBDIRECTIVES3="$DEFAULTDIR/DUMMY.DIR"
+export ANIM="-g"
+export KEEPLIST="yes"
+
+export CURRDIR=$PWD
+
+
+################################################################################
+#
+# Process the command line
+#
+# Check if asking for command line help
+#
+
+if [[ $# -eq 0 ]] ;
+then
+    more ${DEVS}/compile.hlp
+    exit 1
+fi
+
+##############################################################################
+#
+# Parse the command line and setup internal variables
+#
+
+while [[ $1 != "" ]]; do
+    case $1 in 
+
+############################################
+#
+# These are the mass compile targets use for system builds
+#
+
+    all )     export TYPE="mass" ;;
+ 
+    all_f )   export TYPE="mass_f" ;;
+
+    single )  export TYPE="single"
+              export PROGRAM=$2 
+	      shift ;;
+
+    single_f ) export TYPE="single_f"
+              export PROGRAM=$2 
+	      shift ;;
+
+    int )     export ANIM=""
+	      export COBFLAGS="-iav"
+	      export TARGETEXT=".int" ;;
+
+    gnt )     export ANIM=""
+	      export COBFLAGS="-uv" 
+	      export TARGETEXT=".gnt" ;;
+
+    so  )     export ANIM=""
+	      export COBFLAGS="-zv" 
+	      export TARGETEXT=".so" ;;
+
+############################################
+#
+# These are to rebuild only the sources in the source directory that do not
+# exist in the loadlib. Currently this does not check the time-date stamp.
+#
+
+    missing ) export TYPE="missing"
+              if [[ "${TARGETEXT}." == "." ]]
+              then
+                  echo "Unknown object type. Please pass 'int,gnt,so' before the 'missing' parameter"
+	          exit 1
+              fi
+
+              build_diff
+              export COBDIRECTIVES1=""
+              export COBDIRECTIVES2=""
+              export COBDIRECTIVES3=""
+              export PROGRAMLIST=$(cat ${CURRPROJ}/UXBUILD/LIST_DIR/missing.txt);;
+
+
+############################################
+#
+# This option determines whether to keep listing files after a sucessfull
+# compilation.
+#
+
+        list )  KEEPLIST="yes" ;;
+
+############################################
+#
+# These options determine whether to compile for Animation or not.
+#
+
+        anim )  export ANIM="-g" ;;
+
+        noanim )  export ANIM=" " ;;
+
+
+############################################
+#
+# This target will add override directives to the default set.
+#
+
+        custom_dir1 )
+                  if [[ "${2}." != "." ]]
+                  then
+	              if [[ -f $DEFAULTDIR/$2 ]]
+	              then
+                          export COBDIRECTIVES1="$DEFAULTDIR/$2"
+			  shift
+		      else
+			  echo "Custom directive file: $DEFAULTDIR/$2 not found"
+			  exit 1
+	              fi
+                  fi ;;
+
+        custom_dir2 )
+                  if [[ "${2}." != "." ]]
+                  then
+	              if [[ -f $DEFAULTDIR/$2 ]]
+	              then
+                          export COBDIRECTIVES2="$DEFAULTDIR/$2"
+			  shift
+		      else
+			  echo "Custom directive file: $DEFAULTDIR/$2 not found"
+			  exit 1
+	              fi
+                  fi ;;
+
+        custom_dir3 )
+                  if [[ "${2}." != "." ]]
+                  then
+	              if [[ -f $DEFAULTDIR/$2 ]]
+	              then
+                          export COBDIRECTIVES3="$DEFAULTDIR/$2"
+			  shift
+		      else
+			  echo "Custom directive file: $DEFAULTDIR/$2 not found"
+			  exit 1
+	              fi
+                  fi ;;
+
+
+
+############################################
+# shift arguments to the left
+
+    esac
+    shift
+done
+
+############################################
+
+
+let total_count=0
+let success_count=0
+let fail_count=0
+
+case $TYPE in
+
+    mass    )
+	echo "Compiling all programs in: $SOURCE_DIR/COBOL"
+        cd $SOURCE_DIR/COBOL
+        FILES=$(ls *.cbl)
+        for PROGRAM in $FILES
+        do
+           build
+        done ;;
+
+    mass_f    )
+	echo "Compiling all programs in: $FAIL_LIST"
+	cd $FAIL_LIST
+        FILES=$(ls *.lst)
+        cd $SOURCE_DIR/COBOL
+        for PROGRAM_F in $FILES
+        do
+	   PROGRAM=${PROGRAM_F%.lst}.cbl
+           build
+        done ;;
+
+    single  )
+	echo "Single program in: $SOURCE_DIR/COBOL"
+        cd $SOURCE_DIR/COBOL
+	if [[ -f ${PROGRAM}.cbl ]] ;
+	then
+	   PROGRAM=${PROGRAM}.cbl
+           build
+	else
+	   echo "Source ${PROGRAM}.cbl NOT FOUND"
+	   exit 1
+	fi ;;
+
+    single_f  )
+	echo "Single program in: $FAIL_LIST"
+	cd $FAIL_LIST
+	if [[ -f ${PROGRAM}.lst ]] ;
+	then
+	   PROGRAM=${PROGRAM}.cbl
+           cd $SOURCE_DIR/COBOL
+           build
+	else
+	   echo "Source ${PROGRAM}.lst NOT FOUND"
+	   exit 1
+	fi ;;
+
+    missing )
+	echo "Compiling all programs in: $SOURCE_DIR/COBOL that are not in $TARGET_DIR"
+        cd $SOURCE_DIR/COBOL
+        for PROGRAM in $PROGRAMLIST
+        do
+           build
+        done ;;
+
+esac
+
+echo "##############################"
+echo " "
+echo " Results"
+echo " "
+echo " Total compiled: " $total_count
+echo " Successful    : " $success_count
+echo " Failed        : " $fail_count
+echo " "
+echo "##############################"
+

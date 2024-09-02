@@ -1,0 +1,63 @@
+#!/usr/bin/bash
+
+if [[ $PWD = "${DEVS}" ]] ;
+then 
+    echo "Cannot execute in devscripts"
+    exit 1
+fi
+
+if [[ $# -le 1 ]] ;
+then
+    echo " "
+    echo "usage: chcase [U|L] [U|L]"
+    echo " "            
+    echo "Where the first parameter is for the filename and the second is"
+    echo "for the extension."
+    exit 1
+fi
+
+##############################################################################
+#
+# Parse the command line and setup internal variables
+#
+
+if [[ $1 != "U" && $1 != "L" ]] ;
+then 
+    echo " "
+    echo "usage: chcase [U|L] [U|L]"
+    echo " "            
+    echo "Where the first parameter is for the filename and the second is"
+    echo "for the extension."
+    exit 1
+fi
+
+
+if [[ $2 != "U" && $2 != "L" ]] ;
+then
+    echo " "
+    echo "usage: chcase [U|L] [U|L]"
+    echo " "            
+    echo "Where the first parameter is for the filename and the second is"
+    echo "for the extension."
+    exit 1
+fi
+
+if [[ $# -eq 3 ]]
+then
+    FILES=$(ls > $DEVS/tmpfile *$3)
+else
+    FILES=$(ls > $DEVS/tmpfile *)
+fi
+  
+#
+################################################################################
+
+
+awk -f $DEVS/awkfiles/chcase.awk -v NAME=$1 -v EXT=$2 < $DEVS/tmpfile > mvfile
+
+chmod +x mvfile
+./mvfile
+rm mvfile
+rm $DEVS/tmpfile
+
+

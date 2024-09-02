@@ -1,0 +1,111 @@
+#!/bin/bash
+
+#############################################################
+#
+# These variables that control the custom envionment
+#
+
+export DEVROOT=/home/ec2-user/actions-runner/_work/temp-cobol-test/temp-cobol-test/temp-cobol-test
+export DEVS=$DEVROOT/LinuxBuild
+
+#############################################################
+#
+# Function to set the environment for development.
+#
+
+#[PROJECTS]
+. $DEVS/projects/CardDemo.env
+. $DEVS/projects/CardDemo.env
+. $DEVS/projects/CardDemo.env
+#. $DEVS/projects/CardDemo.env - Should have this line after adding CardDemo
+
+############################################################
+#
+# Function to change directory to the root of the current environment.
+
+
+function app {
+if [[ $BUILD = "" ]]
+then
+   echo "No build type set."
+   echo "Run 'qa' or "prod"  first."
+else
+   cd $CURRPROJ
+   echo "Current Directory is: " $PWD
+fi
+}
+
+############################################################
+#
+# Function to change directory to the sys_scripts directory.
+#
+
+function devs {
+cd $DEVS
+echo "Current Directory is: " $PWD
+}
+
+
+############################################################
+#
+# Function to change directory to the source directory.
+
+
+function src {
+if [[ $BUILD = "" ]]
+then
+   echo "No build type set."
+   echo "Run 'qa' or "prod"  first."
+else
+   cd $CURRPROJ/COBOL
+   echo "Current Directory is: " $PWD
+fi
+}
+############################################################
+#
+# Function to change directory to the include directory.
+
+
+function cpy {
+if [[ $BUILD = "" ]]
+then
+   echo "No build type set."
+   echo "Run 'qa' or "prod"  first."
+else
+   cd $CURRPROJ/COPYBOOKS
+   echo "Current Directory is: " $PWD
+fi
+}
+
+############################################################
+#
+# Function to change directory to the loadlib directory.
+
+
+function loadlib {
+if [[ $BUILD = "" ]]
+then
+   echo "No build type set."
+   echo "Run 'qa' or "prod"  first."
+else
+   cd $CURRPROJ/RELEASE/LOADLIB
+   echo "Current Directory is: " $PWD
+fi
+}
+
+
+############################################################
+#
+# This sets up some base variables used to reset the environment when
+# changing between projects and other base environments.
+
+
+if [[ ${BASEPATH:-empty} = "empty" ]]
+then
+   export BASEPATH=$DEVS:$PATH
+   export PATH=$BASEPATH
+else
+   export PATH=$BASEPATH
+fi
+
+. /opt/microfocus/EnterpriseBuildTools/bin/cobsetenv

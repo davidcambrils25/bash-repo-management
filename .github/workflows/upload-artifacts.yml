@@ -1,0 +1,47 @@
+name: Reusable Upload Artifacts Workflow
+
+on:
+  workflow_call:
+    inputs:
+      BUILD_PATH:
+        required: true
+        type: string
+      REPO_MANAGEMENT:
+        required: true
+        type: string
+      OUTPUT_DIR:
+        required: true
+        type: string
+      BINARY_NAME:
+        required: true
+        type: string
+      NEW_VERSION:
+        required: true
+        type: string
+      UPDATE_ARTIFACTS:
+        required: true
+        type: string
+    secrets:
+      GIT_USER:
+        required: true
+      GH_PAT:
+        required: true
+
+jobs:
+  commit-and-upload:
+    runs-on: cobol
+    steps:
+      - name: Commit changes
+        if: ${{ inputs.UPDATE_ARTIFACTS == 'true' }}
+        run: |
+          cd ${{ inputs.BUILD_PATH }}
+          git add artifacts_version.yml
+          git commit -m "Automated updated artifacts_version.yaml by GitHub Actions workflow"
+          git push https://${{ secrets.GIT_USER }}:${{ secrets.GH_PAT }}@github.com/${{ github.repository_owner }}/${{ inputs.REPO_MANAGEMENT }}.git HEAD:main
+
+      - name: Upload Artifacts to GitHub
+        if: ${{ inputs.UPDATE_ARTIFACTS == 'true' }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: ${{ inputs.BINARY_NAME }}-${{ inputs.NEW_VERSION }}
+          path: ${{ github.workspace }}/${{ inputs.OUTPUT_DIR }}/

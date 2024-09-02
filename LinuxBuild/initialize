@@ -1,0 +1,25 @@
+#!/bin/bash
+
+###############################################
+#
+# This script will create the required UXBUILD structure.
+#
+###############################################
+
+echo $SOURCE_DIR
+
+if [[ ! -d $SOURCE_DIR/UXBUILD ]] ;
+then
+    echo "Directory does not exit"
+    mkdir -p $SOURCE_DIR/UXBUILD/RELEASE/LOADLIB
+    mkdir -p $SOURCE_DIR/UXBUILD/RELEASE/DBRMLIB
+    mkdir -p $SOURCE_DIR/UXBUILD/RELEASE/MODLIB
+    mkdir -p $SOURCE_DIR/UXBUILD/LISTINGS/GOOD
+    mkdir -p $SOURCE_DIR/UXBUILD/LISTINGS/FAIL
+    mkdir -p $SOURCE_DIR/UXBUILD/DIRECTIVES/DEFAULTDIR
+    mkdir -p $SOURCE_DIR/UXBUILD/DIRECTIVES/DIRFOLDER
+else
+    echo "Directory exists"
+fi
+
+

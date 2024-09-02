@@ -1,0 +1,11 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<Elements version="1.0">
+    <ElementType elementTypeID="OFFL_ELE_Eclipse_Project" elementTypeName="ECLIPSE_PROJECT">
+        <Element id="OFFL_Model_localhost:0_/CardDemo" label="OFFL_PROP_ECLIPSE_Name" name="CardDemo">
+            <Property PropertyID="OFFL_PROP_ELE_EclipseResourceID" PropertyValue="/CardDemo"/>
+        </Element>
+        <Element id="OFFL_Model_localhost:0_/InternalMicroFocusProject" label="OFFL_PROP_ECLIPSE_Name" name="InternalMicroFocusProject">
+            <Property PropertyID="OFFL_PROP_ELE_EclipseResourceID" PropertyValue="/InternalMicroFocusProject"/>
+        </Element>
+    </ElementType>
+</Elements>

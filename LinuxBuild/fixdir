@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cd $SOURCE_DIR/RELEASE/LOADLIB
+
+FILES=$(ls *.dir)
+
+for i in $FILES
+do
+    awk -f $DEVS/awkfiles/fixdir.awk < $i > $UXDIRS/$i
+done

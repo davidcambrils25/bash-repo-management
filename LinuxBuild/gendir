@@ -1,0 +1,92 @@
+#!/bin/bash
+
+function checksql {
+    if [[ $(grep "EXEC SQL" $PROGRAM) ]] ;
+    then 
+	let sqldir=1
+    fi
+}
+
+function checkcics {
+    if [[ $(grep "EXEC CICS" $PROGRAM) ]] ;
+    then 
+	let cicsdir=1
+    fi
+}
+
+function addcob {
+    echo "USE($DEFAULTDIR/COB.DIR)" > $UXDIRS/$PROGRAM.DIR
+}
+
+function addsql {
+    echo "USE($DEFAULTDIR/SQL.DIR)" >> $UXDIRS/$PROGRAM.DIR
+}
+
+function addcics {
+    echo "USE($DEFAULTDIR/CICS.DIR)" >> $UXDIRS/$PROGRAM.DIR
+}
+
+#########################################################
+#
+# Main
+#
+#########################################################
+
+cd $SOURCE_DIR/COBOL
+
+FILES=$(ls *.cbl)
+
+let gen_cout=0
+let sql_count=0
+let cics_count=0
+let sqlcics_count=0
+
+for PROGRAM in $FILES
+do
+    let sqldir=0
+    let cicsdir=0
+    checksql
+    checkcics    
+
+    addcob
+    if [ $sqldir -eq 1 ];
+    then
+        addsql
+    fi
+
+    if [ $cicsdir -eq 1 ];
+    then
+        addcics
+    fi
+
+    if [[ $sqldir -eq 0 && $cicsdir -eq 0 ]]
+    then
+        let gen_count=gen_count+1
+    fi
+
+    if [[ $sqldir -eq 0 && $cicsdir -eq 1 ]]
+    then
+        let cics_count=cics_count+1
+    fi
+
+    if [[ $sqldir -eq 1 && $cicsdir -eq 0 ]]
+    then
+        let sql_count=sql_count+1
+    fi
+
+    if [[ $sqldir -eq 1 && $cicsdir -eq 1 ]]
+    then
+        let sqlcics_count=sqlcics_count+1
+    fi
+done
+
+echo "#####################################"
+echo "#"
+echo "# Completed directive scan"
+echo "#"
+echo "#  General programs : $gen_count"
+echo "#      sql programs : $sql_count"
+echo "#     cics programs : $cics_count"
+echo "# cics sql programs : $sqlcics_count"
+echo "#"
+echo "#####################################"

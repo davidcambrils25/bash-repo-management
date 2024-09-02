@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="cobolProject" name="InternalMicroFocusProject" uuid="e19d55b0-7708-43d6-b08f-94c666c30a35" version="5.0">
+   <settings xsi:type="projectSettingsContainer">
+      <copybook-paths xsi:type="copybookPathsSettings">
+         <path enabled="true" name="/InternalMicroFocusProject" type="mfpath"/>
+      </copybook-paths>
+      <build-precedence-paths xsi:type="buildPrecedenceSettings">
+         <path enabled="true" name="/InternalMicroFocusProject" type="mfpath"/>
+      </build-precedence-paths>
+      <configurations default="New Configuration" linkedWith="" xsi:type="buildConfigurationsContainer">
+         <configuration description="New Configuration" type="single_exe" xsi:type="cobolBuildConfiguration">
+            <targetdir name="InternalMicroFocusProject"/>
+            <link_settings xsi:type="linkSettings">
+               <options>
+                  <option id="targetName" name="linkSettings" value="InternalMicroFocusProject"/>
+                  <option id="applicationType" name="linkSettings" value="console"/>
+                  <option id="outputDirectory" name="linkSettings" value="New Configuration.bin"/>
+                  <option id="type" name="linkSettings" value="single_exe"/>
+                  <option id="threadedRts" name="linkSettings" value="threadedRts"/>
+                  <option id="runtimeModel" name="linkSettings" value="shared"/>
+                  <option id="platform" name="linkSettings" value="Windows"/>
+                  <option id="bitism" name="linkSettings" value="32 bit"/>
+               </options>
+               <additional_files/>
+            </link_settings>
+            <deploy_settings xsi:type="deploySettings">
+               <options>
+                  <option id="deployFolder" name="deploySettings" value="deploy"/>
+                  <option id="cleanAllowed" name="deploySettings" value="cleanAllowed"/>
+                  <option id="deployFiles" name="deploySettings" value=""/>
+                  <option id="deployPatterns" name="deploySettings" value="New_Configuration.bin/*${exeext}"/>
+               </options>
+            </deploy_settings>
+         </configuration>
+      </configurations>
+      <ims_settings xsi:type="additionalImsSettings">
+         <generatedFileDir name=""/>
+         <imsDatabaseDir name=""/>
+      </ims_settings>
+      <dependent-projects xsi:type="dependentProjectsSettings"/>
+      <asm_link_settings xsi:type="assemblerLinkSettings">
+         <options>
+            <option id="link_create_debug_info" name="mf370lnk" value="ANIM"/>
+            <option id="link_mark_reentrant" name="mf370lnk" value="RENT"/>
+            <option id="link_addressing_mode" name="mf370lnk" value="AMODE(31)"/>
+            <option id="link_residency_mode" name="mf370lnk" value="RMODE(31)"/>
+            <option id="link_generate_listing" name="mf370lnk" value="NOLIST"/>
+            <option id="link_mark_reusable" name="mf370lnk" value="REUS"/>
+            <option id="link_linker_output" name="mf370lnk" value="OMF(390)"/>
+            <option id="link_resolve_external" name="mf370lnk" value="CALL"/>
+         </options>
+      </asm_link_settings>
+   </settings>
+   <files xsi:type="projectFileStore">
+      <filetype type="cobol" xsi:type="cobolFileContainer"/>
+      <filetype type="cobol.copybook" xsi:type="cobolFileContainer"/>
+      <folders xsi:type="cobolFolderContainer">
+         <folder compile="true" path="C/pacworkspace/pactest/es/xa" xsi:type="cobolFolder"/>
+         <folder compile="true" path="C" xsi:type="cobolFolder"/>
+      </folders>
+   </files>
+</project>

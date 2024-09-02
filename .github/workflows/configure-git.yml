@@ -1,0 +1,61 @@
+name: Reusable Configure Git Workflow
+
+on:
+  workflow_call:
+    inputs:
+      BUILD_PATH:
+        required: true
+        type: string
+    secrets:
+      GIT_USER:
+        required: true
+      GIT_EMAIL:
+        required: true
+    outputs:
+      repo_name: 
+        value: ${{ jobs.configure-git.outputs.repo_name }}
+      binary_name: 
+        value: ${{ jobs.configure-git.outputs.binary_name }}
+      new_version: 
+        value: ${{ jobs.configure-git.outputs.new_version }}
+      update_artifacts: 
+        value: ${{ jobs.configure-git.outputs.update_artifacts }}
+
+
+jobs:
+  configure-git:
+    runs-on: cobol
+    outputs:
+      repo_name: ${{ steps.get-repo.outputs.repository }}
+      binary_name: ${{ steps.check-git-diff.outputs.binary }}
+      new_version: ${{ steps.check-git-diff.outputs.version }}
+      update_artifacts: ${{ steps.check-git-diff.outputs.changes_found }}
+    steps:
+      - name: Set up Git
+        run: |
+          git config --global user.name "${{ secrets.GIT_USER }}"
+          git config --global user.email "${{ secrets.GIT_EMAIL }}"
+          
+      - name: Extract repository name
+        id: get-repo
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+          echo "repository=${REPO_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Checkout Repository
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 2
+
+      - name: RENAME COBOL Directory
+        run: |
+          cd ${{ github.workspace }}/ES
+          mkdir -p COBOL-sources
+          mv COBOL/* COBOL-sources
+
+      - name: Determine changed files and update binary versions
+        id: check-git-diff
+        run: |
+          cd ${{ inputs.BUILD_PATH }}/cicd_scripts/
+          chmod +x git-diff.sh
+          ./git-diff.sh "${{ github.workspace }}/ES/COBOL-sources" "${{ github.workspace }}/ES/COBOL" "${{ github.run_id }}" "${{ inputs.BUILD_PATH }}"

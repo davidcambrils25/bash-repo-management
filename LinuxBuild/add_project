@@ -1,0 +1,170 @@
+#!/bin/bash
+
+test `uname -s` = Linux && echocmd="echo -e" || echocmd="echo"
+
+yorn ()
+{
+        YN=b
+        while [ "$YN" != "n" -a "$YN" != "no" -a \
+                "$YN" != "N" -a "$YN" != "NO" -a \
+                "$YN" != "y" -a "$YN" != "yes" -a \
+                "$YN" != "Y" -a "$YN" != "YES" -a \
+                "$YN" != "Yes" -a "$YN" != "No" ]; do
+                $echocmd $1
+                read YN
+                if [ "$YN" = "y" -o "$YN" = "yes" -o "$YN" = "Yes" -o \
+                     "$YN" = "Y" -o "$YN" = "YES" ]; then
+                        return 1
+                fi
+                if [ "$YN" = "n" -o "$YN" = "no" -o "$YN" = "No" -o \
+                     "$YN" = "N" -o "$YN" = "NO" ]; then
+                        return 0
+                fi
+                $echocmd "Please enter y or n"
+        done
+}
+
+cont ()
+{
+        yorn "Do you want to continue (y/n): \c"
+        res=$?
+        if [ "$res" != "1" ]; then
+                exit 0
+        fi
+}
+
+sep ()
+{
+$echocmd
+$echocmd '--------------------------------------------------------------------------------'
+}
+
+umask 000
+
+
+#########################################################################
+#
+# Check for DEVROOT
+#
+#########################################################################
+
+if [[ ${DEVROOT:-empty} = "empty" ]]
+then
+    $echocmd "DEVROOT must be set to run this install script."
+    exit 1
+fi
+
+#########################################################################
+#
+# Ask for project name
+#
+#########################################################################
+
+PROJNAME=
+while test ".$PROJNAME" = "."
+do
+    if test "$1." = "."
+    then
+        $echocmd
+        $echocmd "Please enter the project name to create."
+        $echocmd
+        $echocmd "q(quit) or <Project Name> \c"
+        read PROJNAME
+    else
+        PROJNAME=$1
+    fi
+
+    if test "$PROJNAME" = "q"
+    then
+        $echocmd "\nInstallation Completed"
+        exit 1
+    fi
+
+    PROJNAME=`eval $echocmd $PROJNAME`
+    if test "$PROJNAME." = "."
+    then
+        $echocmd "You must enter a project name."
+        PROJNAME=
+        continue
+    fi
+
+    if test ! -d "$DEVROOT/$PROJNAME"
+    then
+        yorn "$DEVROOT/$PROJNAME does not exist\ndo you want to create it? (y/n): \c"
+        y=$?
+        case "$y" in
+            1)  mkdir $DEVROOT/$PROJNAME
+                chmod 755 $DEVROOT/$PROJNAME
+                ;;
+            *)      PROJNAME=
+                ;;
+        esac
+        continue
+    fi
+
+#    if test ! -w "$PROJNAME"
+#    then
+#        $echocmd "cannot write to $PROJNAME"
+#        DEVROOT=
+#    fi
+done
+
+
+
+#########################################################################
+#
+# Create PROJNAME directories
+#
+#########################################################################
+
+$echocmd "Creating project directories."
+
+echo $DEVROOT
+read x
+
+mkdir $DEVROOT/$PROJNAME/COBOL
+mkdir $DEVROOT/$PROJNAME/COPYBOOKS
+mkdir $DEVROOT/$PROJNAME/BMS
+mkdir $DEVROOT/$PROJNAME/BMSCOPY
+mkdir $DEVROOT/$PROJNAME/BMSCOPYGEN
+mkdir -p $DEVROOT/$PROJNAME/UXBUILD/RELEASE/LOADLIB
+mkdir $DEVROOT/$PROJNAME/UXBUILD/RELEASE/MODLIB
+mkdir $DEVROOT/$PROJNAME/UXBUILD/RELEASE/DBRMLIB
+mkdir -p $DEVROOT/$PROJNAME/UXBUILD/DIRECTIVES/DEFAULTDIR
+mkdir $DEVROOT/$PROJNAME/UXBUILD/DIRECTIVES/DIRFOLDER
+mkdir -p $DEVROOT/$PROJNAME/UXBUILD/LISTINGS/COMPILE
+mkdir $DEVROOT/$PROJNAME/UXBUILD/LISTINGS/GOOD
+mkdir $DEVROOT/$PROJNAME/UXBUILD/LISTINGS/FAIL
+mkdir $DEVROOT/$PROJNAME/UXBUILD/LIST_DIR
+
+# These directories are output directories from the Eclipse project
+mkdir $DEVROOT/$PROJNAME/Listings
+mkdir -p $DEVROOT/$PROJNAME/RELEASE/LOADLIB
+mkdir $DEVROOT/$PROJNAME/RELEASE/MODLIB
+
+chmod -R 755 $DEVROOT/$PROJNAME
+
+
+#########################################################################
+#
+# Awk "project_template" and replace [PROJNAME] and [ANIM] tags.
+# Output "<PROJNAME.env>" 
+#
+#########################################################################
+
+$echocmd "Creating '$PROJNAME.env' script."
+
+awk -f $DEVS/awkfiles/add_project.awk PROJNAME=$PROJNAME ANIM=$ANIM < ${DEVS}/project_template > ${DEVS}/projects/$PROJNAME.env
+
+#########################################################################
+#
+# Awk "setenv" and add the PROJNAME.env to the [PROJECTS] tag.
+#
+#########################################################################
+
+$echocmd "Updating 'setenv' script."
+
+awk -f $DEVS/awkfiles/add_project.awk PROJNAME=$PROJNAME < ${DEVS}/setenv > ${DEVS}/setenv.tmp
+
+mv ${DEVS}/setenv.tmp ${DEVS}/setenv
+

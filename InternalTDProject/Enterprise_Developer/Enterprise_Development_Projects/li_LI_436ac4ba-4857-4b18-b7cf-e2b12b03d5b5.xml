@@ -1,0 +1,9 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<Elelist actionID="OFFL_ACT_ELIST_GetEclipseProjects" elelistStructureID="OFFL_ELIST_Projects" id="LI_436ac4ba-4857-4b18-b7cf-e2b12b03d5b5" resourceID="APPLICATION_4a362511-fb00-4494-992c-110ab941626c" tableViewLabel="Table Results" title="Enterprise Development Projects - Eclipse projects" version="1.0">
+    <listelement elementID="OFFL_Model_localhost:0_/CardDemo" entryID="LE_7b72e419-6e1e-406e-9fb6-fd497a7146bb" position="0">
+        <Property PropertyID="OFFL_PROP_ELE_Matchname" PropertyValue="ECLIPSE_PROJECT"/>
+    </listelement>
+    <listelement elementID="OFFL_Model_localhost:0_/InternalMicroFocusProject" entryID="LE_d16e4570-7929-40ac-9fa8-f18b0cdfd02d" position="1">
+        <Property PropertyID="OFFL_PROP_ELE_Matchname" PropertyValue="ECLIPSE_PROJECT"/>
+    </listelement>
+</Elelist>

@@ -1,0 +1,34 @@
+#!/bin/ksh
+
+if [[ $PWD = "${DEVS}" ]] ;
+then 
+    echo "Cannot execute in devscripts"
+    exit 1
+fi
+
+if [[ $# -ne 2 ]] ;
+then
+    echo " "
+    echo "usage: [old extension, new extension]"
+    echo " "            
+    exit 1
+fi
+
+FILES=$(ls *.$1)
+
+echo "This will rename ALL files in ${PWD}"
+echo "with a ${1} extension to a ${2} extension."
+echo " "
+echo "Press (y) to continue, anyother key to quit."
+read key
+if [[ ${key} != "y" ]]
+then 
+    exit 0
+fi
+
+for i in $FILES
+do
+    echo "Renaming $i to ${i%%.${1}}.${2}"
+    mv $i ${i%%.${1}}.${2}
+done
+

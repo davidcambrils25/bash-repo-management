@@ -1,0 +1,75 @@
+age: compile [list] [custom_dir{1|2|3}] [anim] [int|gnt|so] [program]
+
+Where: [no|list] indicates: 
+
+       Argument = list | nolist
+       Default = Delete all list files after a sucessfull compilation.
+
+       Do not delete any listing files after a sucessfull compilation.
+
+Where: [custom_dir{1|2|3}] indicates:
+
+       Argument = directive file
+       Default = 
+      
+       Defines what custom compiler directives are used.
+
+       custom_dir = Compile using up to three custom directives files. Place
+              these files in "$DEFAULTDIR".
+               
+              example "custom_dir1 BUILD.DIR"
+
+Where: [no|anim] indicates:
+       for animation
+
+       Arguments = anim | noanim
+       Default : anim
+
+       Defines whether a program should be compiled for Animation.
+
+Where: [program] indicates:
+
+           all      : Compile the programs listed in:
+
+                      ${SOURCE_DIR}/COBOL
+
+           single program-name  : Compile a single program from: 
+
+                      ${SOURCE_DIR}/COBOL
+
+                      Do not include the "cbl" extension.
+
+           missing  : Compares the source and loadlib directory and creates
+                      a list of missing sources to compile.
+
+       Failed targets:
+
+                    Programs that fail compilation have their listing files moved to the 
+                    $FAIL_LIST directory.
+
+           all_f    : Compile the programs listed in:
+
+                      ${FAIL_LIST}
+
+           single_f program-name  : Compile a single program from: 
+
+                      ${FAIL_LIST}
+
+                      Do not include the "lst" extension.
+
+Examples:
+
+    compile all int
+
+        This will compile the programs in $SOURCE_DIR/COBOL to int code.
+
+    compile all_f gnt
+
+        This will compile all the programs that have listing files in $FAIL_LIST to gnt code.
+        command.
+
+    compile noanim nolist so single myprog
+
+        This will compile the program "myprog.cbl" to "so" with no Animation 
+        support. The listing files will not be preserved.
+

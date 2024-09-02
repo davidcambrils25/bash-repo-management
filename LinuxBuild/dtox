@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [[ $PWD = "${DEVS}" ]] ;
+then 
+    echo "Cannot execute in devscripts"
+    exit 1
+fi
+
+if [[ $# -lt 1 ]] ;
+then
+    echo " "
+    echo "usage: dtox file"
+    echo " "            
+    echo "Where the first parameter is either a complete filename".
+    echo " "
+    echo "This program strips extra ^M characters."
+    exit 1
+fi
+
+##############################################################################
+
+echo "Converting: " $1
+
+
+tr -ds "\r" "" < $1 > $1.tmp
+mv $1.tmp $1
+
