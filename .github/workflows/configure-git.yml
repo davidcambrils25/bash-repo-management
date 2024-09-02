@@ -32,4 +32,5 @@ jobs:
         with:
           GIT_USER: ${{ secrets.GIT_USER }}
           GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+          BUILD_PATH: ${{ inputs.BUILD_PATH }}
         
