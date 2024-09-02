@@ -51,5 +51,5 @@ runs:
 
     - name: Determine changed files and update binary versions
       id: check-git-diff
-      run: ${{ github.action_path }}/git-diff.sh
+      run: ${{ github.action_path }}/git-diff.sh "${{ github.workspace }}/ES/COBOL-sources" "${{ github.workspace }}/ES/COBOL" "${{ github.run_id }}" "${{ github.action_path }}"
       shell: bash
