@@ -71,3 +71,16 @@ echo "files to be compiled:"
 ls $GIT_PATH/$COUNTRY/COBOL
 
 echo "changes_found=${CHANGES_FOUND}" >> $GITHUB_OUTPUT
+
+# Process non-COBOL files
+for file in "${NON_COBOL_FILES[@]}"; do
+  if [ -n "$BINARY_NAME" ]; then
+    SOURCE_FILE=$(basename "$file")
+    # Ensure to add non-COBOL files only to the latest version of the binary under the specific PR_NAME
+    yq e "(.${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\" and .version == \"$NEW_VERSION\")).sources += [\"$SOURCE_FILE\"]" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
+    # Copy the non-COBOL file to the Output directory with compiled COBOL files
+    cp $GIT_PATH/"$file" ${OUTPUT_DIR}/
+  fi
+done
+
+cat $REPO_MANAGEMENT_PATH/artifacts_version.yml
