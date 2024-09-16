@@ -38,7 +38,6 @@ for file in $CHANGED_FILES; do
 
     # Iterate over all keys in the YAML file
     ENTRY_EXISTS=false
-    BINARY_EXISTS_PR=false
     CURRENT_VERSION=0
     for PR in $(yq e 'keys | .[]' $REPO_MANAGEMENT_PATH/artifacts_version.yml | grep -v 'global_version'); do
       # Check if the binary name exists in the current PR entry
@@ -48,10 +47,6 @@ for file in $CHANGED_FILES; do
         VERSION=$(yq e ".${PR}.binaries[] | select(.name == \"$BINARY_NAME\") | .version" $REPO_MANAGEMENT_PATH/artifacts_version.yml | sort -V | tail -n1)
         if [[ "$VERSION" -gt "$CURRENT_VERSION" ]]; then
           CURRENT_VERSION=$VERSION
-        fi
-        # Check if the binary name exists in the PR_NAME
-        if [[ "$PR" == "$PR_NAME" ]]; then
-          BINARY_EXISTS_PR = true
         fi
       fi
     done
@@ -63,7 +58,9 @@ for file in $CHANGED_FILES; do
       NEW_VERSION=$((CURRENT_VERSION + 1))
     fi
 
-    if [ BINARY_EXISTS_PR == true ]; then
+    # Check if the binary name exists in the PR_NAME
+    BINARY_EXISTS=$(yq e ".${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\")" $REPO_MANAGEMENT_PATH/artifacts_version.yml)
+    if [ -n "$BINARY_EXISTS" ]; then
       # Update the version of the existing binary
       yq e "(.${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\")) |= . + {\"version\": \"$NEW_VERSION\"}" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
     else

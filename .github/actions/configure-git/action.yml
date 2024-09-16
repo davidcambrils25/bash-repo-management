@@ -56,3 +56,4 @@ runs:
       id: check-git-diff
       run: ${{ github.action_path }}/git-diff.sh "${{ github.workspace }}" "${{ github.run_id }}" "${{ inputs.BUILD_PATH }}" "/home/runner/output" "PR1_name"
       shell: bash
+      #${{ github.event.pull_request.head.ref }}
