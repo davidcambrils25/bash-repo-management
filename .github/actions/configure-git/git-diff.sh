@@ -51,7 +51,7 @@ for file in $CHANGED_FILES; do
         fi
         # Check if the binary name exists in the PR_NAME
         echo "control ${PR} and control2 ${PR_NAME}"
-        if [[ $PR == $PR_NAME ]]; then
+        if [[ "$PR" == "$PR_NAME" ]]; then
           BINARY_EXISTS_PR=true
         fi
       fi
@@ -64,7 +64,7 @@ for file in $CHANGED_FILES; do
       NEW_VERSION=$((CURRENT_VERSION + 1))
     fi
 
-    if [ BINARY_EXISTS_PR == true ]; then
+    if [ "$BINARY_EXISTS_PR" == true ]; then
       # Update the version of the existing binary
       yq e "(.${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\")) |= . + {\"version\": \"$NEW_VERSION\"}" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
     else
