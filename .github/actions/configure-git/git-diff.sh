@@ -50,7 +50,7 @@ for file in $CHANGED_FILES; do
           CURRENT_VERSION=$VERSION
         fi
         # Check if the binary name exists in the PR_NAME
-        if [[ "$PR" == "$PR_NAME" ]]; then
+        if [[ $PR == $PR_NAME ]]; then
           BINARY_EXISTS_PR=true
         fi
       fi
