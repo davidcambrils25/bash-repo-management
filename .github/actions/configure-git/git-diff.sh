@@ -10,6 +10,7 @@ COUNTRY=""
 CHANGES_FOUND=false
 declare -a NON_COBOL_FILES
 
+
 cd $GIT_PATH
 
 CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
@@ -37,26 +38,22 @@ for file in $CHANGED_FILES; do
 
     # Iterate over all keys in the YAML file
     ENTRY_EXISTS=false
-    for PR in $(yq e 'keys | .[]' $REPO_MANAGEMENT_PATH/artifacts_version.yml); do
+    CURRENT_VERSION=0
+    for PR in $(yq e 'keys | .[]' $REPO_MANAGEMENT_PATH/artifacts_version.yml | grep -v 'global_version'); do
       # Check if the binary name exists in the current PR entry
       BINARY_ENTRY=$(yq e ".${PR}.binaries[] | select(.name == \"$BINARY_NAME\")" $REPO_MANAGEMENT_PATH/artifacts_version.yml)
       if [ -n "$BINARY_ENTRY" ]; then
         ENTRY_EXISTS=true
-        break
+        VERSION=$(yq e ".${PR}.binaries[] | select(.name == \"$BINARY_NAME\") | .version" $REPO_MANAGEMENT_PATH/artifacts_version.yml | sort -V | tail -n1)
+        if [[ "$VERSION" -gt "$CURRENT_VERSION" ]]; then
+          CURRENT_VERSION=$VERSION
+        fi
       fi
     done
 
     if [ "$ENTRY_EXISTS" = false ]; then
       NEW_VERSION=1
     else
-      # Find the highest version number across all PR_NAME entries
-      CURRENT_VERSION=0
-      for PR in $(yq e 'keys | .[]' $REPO_MANAGEMENT_PATH/artifacts_version.yml | grep -v 'global_version'); do
-        VERSION=$(yq e ".${PR}.binaries[] | select(.name == \"$BINARY_NAME\") | .version" $REPO_MANAGEMENT_PATH/artifacts_version.yml | sort -V | tail -n1)
-        if [[ "$VERSION" -gt "$CURRENT_VERSION" ]]; then
-          CURRENT_VERSION=$VERSION
-        fi
-      done
       # Increment the version number
       NEW_VERSION=$((CURRENT_VERSION + 1))
     fi
@@ -87,8 +84,8 @@ echo "changes_found=${CHANGES_FOUND}" >> $GITHUB_OUTPUT
 for file in "${NON_COBOL_FILES[@]}"; do
   if [ -n "$BINARY_NAME" ]; then
     SOURCE_FILE=$(basename "$file")
-    # Ensure to add non-COBOL files only to the latest version of the binary under the specific PR_NAME
-    yq e "(.${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\" and .version == \"$NEW_VERSION\")).sources += [\"$SOURCE_FILE\"]" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
+    # Add non-COBOL files under the specific PR_NAME
+    yq e ".${PR_NAME}.sources += [\"$SOURCE_FILE\"]" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
     # Copy the non-COBOL file to the Output directory with compiled COBOL files
     cp $GIT_PATH/"$file" ${OUTPUT_DIR}/
   fi
