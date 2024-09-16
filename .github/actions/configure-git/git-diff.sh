@@ -1,43 +1,65 @@
 #!/bin/bash
 
-SOURCE_PATH=$1
-BUILD_PATH=$2
-RUNNER_ID=$3
-REPO_MANAGEMENT_PATH=$4
+GIT_PATH=$1
+RUNNER_ID=$2
+REPO_MANAGEMENT_PATH=$3
+OUTPUT_DIR=$4
+PR_NAME=$5
 BINARY_NAME=""
+COUNTRY=""
 CHANGES_FOUND=false
 declare -a NON_COBOL_FILES
 
-cd $SOURCE_PATH
+cd $GIT_PATH
 
 CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
 echo "The modified files are: ${CHANGED_FILES}"
 
+# Check if any files have been modified in the ES or PT directory
+if echo $CHANGED_FILES | grep ES/; then
+  COUNTRY="ES"
+elif echo $CHANGED_FILES | grep PT/; then
+  COUNTRY="PT"
+else
+  echo "There are no modified files in the directories /ES or /PT"
+  exit 0
+fi
+echo "The selected country is: ${COUNTRY}"
+echo "country=${COUNTRY}" >> $GITHUB_OUTPUT
 
 # Iterate through files to find the COBOL file and collect non-COBOL files
 for file in $CHANGED_FILES; do
-  if [[ "$file" == *".cbl"* && -z "$BINARY_NAME" ]]; then
+  if [[ "$file" == *".cbl"* ]]; then
     # Process the COBOL file
     BINARY_NAME=$(basename "$file" .cbl)
-    cp "${SOURCE_PATH}/${BINARY_NAME}.cbl" $BUILD_PATH
-    ls $BUILD_PATH
-    echo "binary=${BINARY_NAME}" >> $GITHUB_OUTPUT
+    # Prepare folder COBOL for build only modified files
+    cp "$GIT_PATH/$COUNTRY/COBOL-sources/${BINARY_NAME}.cbl" $GIT_PATH/$COUNTRY/COBOL
 
-    # Check if the entry exists
-    ENTRY_EXISTS=$(yq e ".binaries[] | select(.name == \"$BINARY_NAME\")" $REPO_MANAGEMENT_PATH/artifacts_version.yml)
+    # Check if the binary entry exists for the specified PR_NAME
+    ENTRY_EXISTS=$(yq e ".${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\")" $REPO_MANAGEMENT_PATH/artifacts_version.yml)
 
     if [ -z "$ENTRY_EXISTS" ]; then
       NEW_VERSION=1
       # Create new entry in the YAML file
-      yq e ".binaries += [{\"name\":\"$BINARY_NAME\", \"runID\":\"$RUNNER_ID\", \"version\": \"$NEW_VERSION\", \"sources\": []}]" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
+      yq e ".${PR_NAME}.binaries += [{\"name\":\"$BINARY_NAME\", \"version\": \"$NEW_VERSION\"}]" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
     else
-      # Search the last version
-      CURRENT_VERSION=$(yq e ".binaries[] | select(.name == \"$BINARY_NAME\") | .version" $REPO_MANAGEMENT_PATH/artifacts_version.yml | sort -V | tail -n1)
+      # Find the highest version number across all PR_NAME entries
+      CURRENT_VERSION=0
+      for PR in $(yq e 'keys | .[]' $REPO_MANAGEMENT_PATH/artifacts_version.yml | grep -v 'global_version'); do
+        CURRENT_VERSION=$(yq e ".${PR}.binaries[] | select(.name == \"$BINARY_NAME\") | .version" $REPO_MANAGEMENT_PATH/artifacts_version.yml | sort -V | tail -n1)
+        if [[ "$VERSION" -gt "$CURRENT_VERSION" ]]; then
+          CURRENT_VERSION=$VERSION
+        fi
+      done
       # Increment the version number
       NEW_VERSION=$((CURRENT_VERSION + 1))
       # Update the version of the entry
-      yq e "(.binaries[] | select(.name == \"$BINARY_NAME\" and .version == \"$CURRENT_VERSION\") | .version) = \"$NEW_VERSION\"" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
+      yq e "(.${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\" and .version == \"$CURRENT_VERSION\")) |= . + {\"version\": \"$NEW_VERSION\", \"runID\": \"$RUNNER_ID\"}" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
     fi
+
+    # Update the runID
+    yq e ".${PR_NAME}.runID = \"$RUNNER_ID\"" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
+
     CHANGES_FOUND=true
   else
     NON_COBOL_FILES+=("$file")
@@ -45,16 +67,7 @@ for file in $CHANGED_FILES; do
   fi
 done
 
+echo "files to be compiled:"
+ls $GIT_PATH/$COUNTRY/COBOL
+
 echo "changes_found=${CHANGES_FOUND}" >> $GITHUB_OUTPUT
-echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
-
-# Process non-COBOL files
-for file in "${NON_COBOL_FILES[@]}"; do
-  if [ -n "$BINARY_NAME" ]; then
-    SOURCE_FILE=$(basename "$file")
-    # Ensure to add non-COBOL files only to the latest version of the binary
-    yq e "(.binaries[] | select(.name == \"$BINARY_NAME\" and .version == \"$NEW_VERSION\")).sources += [\"$SOURCE_FILE\"]" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
-  fi
-done
-
-cat $REPO_MANAGEMENT_PATH/artifacts_version.yml
