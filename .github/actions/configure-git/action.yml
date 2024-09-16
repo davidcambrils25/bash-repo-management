@@ -54,5 +54,5 @@ runs:
 
     - name: Determine changed files and update binary versions
       id: check-git-diff
-      run: ${{ github.action_path }}/git-diff.sh "${{ github.workspace }}" "${{ github.run_id }}" "${{ inputs.BUILD_PATH }}" "/home/runner/output" "PR_test1"
+      run: ${{ github.action_path }}/git-diff.sh "${{ github.workspace }}" "${{ github.run_id }}" "${{ inputs.BUILD_PATH }}" "/home/runner/output" "PR_name"
       shell: bash
