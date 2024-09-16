@@ -35,10 +35,18 @@ for file in $CHANGED_FILES; do
     # Prepare folder COBOL for build only modified files
     cp "$GIT_PATH/$COUNTRY/COBOL-sources/${BINARY_NAME}.cbl" $GIT_PATH/$COUNTRY/COBOL
 
-    # Check if the binary entry exists for the specified PR_NAME
-    ENTRY_EXISTS=$(yq e ".${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\")" $REPO_MANAGEMENT_PATH/artifacts_version.yml)
+    # Iterate over all keys in the YAML file
+    ENTRY_EXISTS=false
+    for PR in $(yq e 'keys | .[]' $REPO_MANAGEMENT_PATH/artifacts_version.yml); do
+      # Check if the binary name exists in the current PR entry
+      BINARY_ENTRY=$(yq e ".${PR}.binaries[] | select(.name == \"$BINARY_NAME\")" $REPO_MANAGEMENT_PATH/artifacts_version.yml)
+      if [ -n "$BINARY_ENTRY" ]; then
+        ENTRY_EXISTS=true
+        break
+      fi
+    done
 
-    if [ -z "$ENTRY_EXISTS" ]; then
+    if [ "$ENTRY_EXISTS" = false ]; then
       NEW_VERSION=1
       # Create new entry in the YAML file
       yq e ".${PR_NAME}.binaries += [{\"name\":\"$BINARY_NAME\", \"version\": \"$NEW_VERSION\"}]" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
@@ -56,16 +64,14 @@ for file in $CHANGED_FILES; do
       # Update the version of the entry
       yq e "(.${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\" and .version == \"$CURRENT_VERSION\")) |= . + {\"version\": \"$NEW_VERSION\", \"runID\": \"$RUNNER_ID\"}" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
     fi
-
-    # Update the runID
-    yq e ".${PR_NAME}.runID = \"$RUNNER_ID\"" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
-
     CHANGES_FOUND=true
   else
     NON_COBOL_FILES+=("$file")
     echo $NON_COBOL_FILES
   fi
 done
+# Update the runID
+yq e ".${PR_NAME}.runID = \"$RUNNER_ID\"" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
 
 echo "files to be compiled:"
 ls $GIT_PATH/$COUNTRY/COBOL
