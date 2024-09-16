@@ -48,21 +48,26 @@ for file in $CHANGED_FILES; do
 
     if [ "$ENTRY_EXISTS" = false ]; then
       NEW_VERSION=1
-      # Create new entry in the YAML file
-      yq e ".${PR_NAME}.binaries += [{\"name\":\"$BINARY_NAME\", \"version\": \"$NEW_VERSION\"}]" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
     else
       # Find the highest version number across all PR_NAME entries
       CURRENT_VERSION=0
       for PR in $(yq e 'keys | .[]' $REPO_MANAGEMENT_PATH/artifacts_version.yml | grep -v 'global_version'); do
-        CURRENT_VERSION=$(yq e ".${PR}.binaries[] | select(.name == \"$BINARY_NAME\") | .version" $REPO_MANAGEMENT_PATH/artifacts_version.yml | sort -V | tail -n1)
+        VERSION=$(yq e ".${PR}.binaries[] | select(.name == \"$BINARY_NAME\") | .version" $REPO_MANAGEMENT_PATH/artifacts_version.yml | sort -V | tail -n1)
         if [[ "$VERSION" -gt "$CURRENT_VERSION" ]]; then
           CURRENT_VERSION=$VERSION
         fi
       done
       # Increment the version number
       NEW_VERSION=$((CURRENT_VERSION + 1))
-      # Update the version of the entry
-      yq e "(.${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\" and .version == \"$CURRENT_VERSION\")) |= . + {\"version\": \"$NEW_VERSION\", \"runID\": \"$RUNNER_ID\"}" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
+    fi
+    # Check if the binary name exists in the PR_NAME
+    BINARY_EXISTS=$(yq e ".${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\")" $REPO_MANAGEMENT_PATH/artifacts_version.yml)
+    if [ -n "$BINARY_EXISTS" ]; then
+      # Update the version of the existing binary
+      yq e "(.${PR_NAME}.binaries[] | select(.name == \"$BINARY_NAME\")) |= . + {\"version\": \"$NEW_VERSION\"}" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
+    else
+      # Add a new binary entry if it doesn't exist
+      yq e ".${PR_NAME}.binaries += [{\"name\":\"$BINARY_NAME\", \"version\": \"$NEW_VERSION\"}]" -i $REPO_MANAGEMENT_PATH/artifacts_version.yml
     fi
     CHANGES_FOUND=true
   else
